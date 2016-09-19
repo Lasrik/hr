@@ -1,35 +1,40 @@
 package de.tle.hr.botcleanv2;
 
 import java.awt.*;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
-
-import static java.lang.Math.max;
-import static java.lang.Math.min;
 
 public class Solution {
 
   public static final int SIZE = 5;
-
-  public enum CMD {
-    LEFT, RIGHT, UP, DOWN, CLEAN
-  }
 
   public static CMD next_move(int currentRow, int currentCol, char[][] board) {
     if (board[currentRow][currentCol] == 'd') {
       return CMD.CLEAN;
     }
 
-    Point dust = findNearest(currentRow, currentCol, board);
+    Point dust = findNearest(currentRow, currentCol, board, 'd');
     if (dust != null) {
       return move_to(currentRow, currentCol, (int) dust.getX(), (int) dust.getY());
     }
 
-    if (currentRow < 1) return CMD.DOWN;
-    if (currentRow > 3) return CMD.UP;
-    if (currentCol < 1) return CMD.RIGHT;
-    if (currentCol > 3) return CMD.LEFT;
+    Point hidden = findNearest(currentRow, currentCol, board, 'o');
+    if (hidden != null) {
+      return move_to(currentRow, currentCol, hidden.x, hidden.y);
+    }
 
-    return CMD.RIGHT;
+    if (currentRow < 1) return CMD.DOWN;
+    if (currentRow >= 4) return CMD.UP;
+    if (currentCol < 1) return CMD.RIGHT;
+    if (currentCol >= 4) return CMD.LEFT;
+
+    return Math.random() > 0.5 ? CMD.DOWN : CMD.RIGHT;
   }
 
   public static CMD move_to(int currentRow, int currentCol, int destRow, int destCol) {
@@ -46,13 +51,13 @@ public class Solution {
     }
   }
 
-  public static Point findNearest(int currentRow, int currentCol, char[][] board) {
+  public static Point findNearest(int currentRow, int currentCol, char[][] board, char what) {
     double minDist = Double.MAX_VALUE;
     Point bot = new Point(currentRow, currentCol);
     Point result = null;
-    for (int row = max(0, currentRow - 1); row <= min(4, currentRow + 1); row++) {
-      for (int col = max(0, currentCol - 1); col <= min(4, currentCol + 1); col++) {
-        if (board[row][col] == 'd') {
+    for (int row = 0; row < board.length; row++) {
+      for (int col = 0; col < board[row].length; col++) {
+        if (board[row][col] == what) {
           double dist = bot.distance(row, col);
           if (dist < minDist) {
             minDist = dist;
@@ -65,7 +70,7 @@ public class Solution {
     return result;
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
     Scanner in = new Scanner(System.in);
     int posR = in.nextInt();
     int posC = in.nextInt();
@@ -78,7 +83,31 @@ public class Solution {
       }
     }
 
+    Path path = Paths.get("./board.txt");
+    if (Files.isReadable(path)) {
+      List<String> lines = Files.readAllLines(path, Charset.forName("utf-8"));
+      for (int row = 0; row < SIZE; row++) {
+        String line = lines.get(row);
+        System.err.println(line);
+        for (int col = 0; col < SIZE; col++) {
+          if (board[row][col] == 'o') {
+            board[row][col] = line.charAt(col);
+          }
+        }
+      }
+    }
+
+    List<String> lines = new ArrayList<>(SIZE);
+    for (int row = 0; row < SIZE; row++) {
+      lines.add(String.copyValueOf(board[row]));
+    }
+    Files.write(path, lines);
+
     CMD cmd = next_move(posR, posC, board);
     System.out.println(cmd);
+  }
+
+  public enum CMD {
+    LEFT, RIGHT, UP, DOWN, CLEAN
   }
 }
