@@ -1,17 +1,12 @@
 package de.tle.hr.packmandfs;
 
-import java.awt.Point;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
+import java.awt.*;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.Stack;
 
 public class Solution {
 
-  static void dfs(int rows, int cols, int pacman_r, int pacman_c, int food_r, int food_c, char[][] grid) {
+  static List<Point> dfs(int rows, int cols, int pacman_r, int pacman_c, char[][] grid) {
     Stack<Point> stack = new Stack<>();
     boolean[][] visited = new boolean[rows][cols];
     List<Point> expanded = new LinkedList<>();
@@ -29,18 +24,8 @@ public class Solution {
         for (Point point : expanded) {
           System.out.println(point.x + " " + point.y);
         }
-        List<Point> path = new LinkedList<>();
-        path.add(current);
-        do {
-          current = parents.get(current);
-          path.add(current);
-        } while (current.x != pacman_r || current.y != pacman_c);
-        System.out.println(path.size() - 1);
-        Collections.reverse(path);
-        for (Point point : path) {
-          System.out.println(point.x + " " + point.y);
-        }
-        return;
+
+        return path(pacman_r, pacman_c, parents, current);
       }
 
       // UP
@@ -83,6 +68,20 @@ public class Solution {
         parents.put(p, current);
       }
     }
+
+    // Kein Weg vom Pacman zum Food ..
+    return null;
+  }
+
+  static List<Point> path(int pacman_r, int pacman_c, Map<Point, Point> parents, Point current) {
+    List<Point> path = new LinkedList<>();
+    path.add(current);
+    do {
+      current = parents.get(current);
+      path.add(current);
+    } while (current.x != pacman_r || current.y != pacman_c);
+
+    return path;
   }
 
   public static void main(String[] args) {
@@ -106,6 +105,15 @@ public class Solution {
       }
     }
 
-    dfs(rows, cols, pacman_r, pacman_c, food_r, food_c, grid);
+    List<Point> path = dfs(rows, cols, pacman_r, pacman_c, grid);
+    if (path != null) {
+      System.out.println(path.size() - 1);
+      Collections.reverse(path);
+      for (Point point : path) {
+        System.out.println(point.x + " " + point.y);
+      }
+    } else {
+      System.out.println("Kein Weg gefunden!");
+    }
   }
 }
